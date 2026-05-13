@@ -65,3 +65,35 @@ def test_keyboard_execute_dry_run(capsys):
     out = capsys.readouterr().out
     assert "F5" in out
     assert "dry-run" in out
+
+
+def test_keyboard_execute_live_presses_and_releases():
+    from actions.keyboard import KeyboardAction
+    from unittest.mock import patch, MagicMock
+    action = KeyboardAction.from_config("x", {"action": "keyboard", "keys": [["F5"]]})
+    mock_ctrl = MagicMock()
+    with patch("actions.keyboard._keyboard", mock_ctrl):
+        action.execute(dry_run=False)
+    assert mock_ctrl.press.called
+    assert mock_ctrl.release.called
+
+
+def test_keyboard_execute_multi_chord_sleeps_between():
+    from actions.keyboard import KeyboardAction
+    from unittest.mock import patch, MagicMock
+    action = KeyboardAction.from_config("x", {
+        "action": "keyboard",
+        "keys": [["Control", "c"], ["Control", "v"]],
+    })
+    mock_ctrl = MagicMock()
+    with patch("actions.keyboard._keyboard", mock_ctrl):
+        with patch("actions.keyboard.time.sleep") as mock_sleep:
+            action.execute(dry_run=False)
+    # Sleep between chords but NOT after the last
+    assert mock_sleep.call_count == 1
+
+
+def test_keyboard_from_config_invalid_keys_format():
+    from actions.keyboard import KeyboardAction
+    with pytest.raises(ValueError, match="list of lists"):
+        KeyboardAction.from_config("bad", {"action": "keyboard", "keys": ["F5"]})

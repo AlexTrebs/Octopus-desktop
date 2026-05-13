@@ -7,3 +7,4 @@ numpy>=2.0.0
 PyQt6>=6.6.0
 # Optional: install pvporcupine>=3.0.0 for Porcupine wake word mode
 pytest>=8.0.0
+pytest-qt>=4.4.0
