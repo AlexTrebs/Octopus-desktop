@@ -49,8 +49,11 @@ def test_none_summary():
     assert action.summary() == "[none]"
 
 
-def test_none_execute_does_not_raise():
+def test_none_execute_does_not_raise(caplog):
     from actions.none import NoneAction
+    import logging
     action = NoneAction.from_config("cancel", {"action": "none"})
-    action.execute()
+    with caplog.at_level(logging.DEBUG):
+        action.execute()
+    assert any("cancel" in r.message for r in caplog.records)
     action.execute(dry_run=True)
