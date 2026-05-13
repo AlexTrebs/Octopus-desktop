@@ -363,3 +363,73 @@ def test_resolve_device_index_prefers_default_device(main_window):
         with patch("audio_devices.get_input_devices", return_value=devices):
             result = main_window._resolve_device_index()
     assert result == 1
+
+
+# --- OverlayWidget ---
+
+
+@pytest.fixture
+def overlay(qtbot):
+    cfg = MagicMock()
+    cfg.overlay_x = -1
+    cfg.overlay_y = -1
+    cfg.overlay_position_preset = "top-right"
+    from event_bridge import AssistantSignals
+    from overlay_widget import OverlayWidget
+    w = OverlayWidget(cfg, AssistantSignals())
+    qtbot.addWidget(w)
+    return w
+
+
+def test_overlay_constructs(overlay):
+    from overlay_widget import OverlayWidget
+    assert isinstance(overlay, OverlayWidget)
+
+
+def test_enter_overlay_mode_sets_flag(overlay):
+    overlay.enter_overlay_mode()
+    assert overlay._overlay_active is True
+
+
+def test_leave_overlay_mode_clears_flag(overlay):
+    overlay.enter_overlay_mode()
+    overlay.leave_overlay_mode()
+    assert overlay._overlay_active is False
+
+
+def test_on_wake_word_sets_listening(overlay):
+    overlay._on_wake_word()
+    assert overlay._octopus._state == "listening"
+
+
+def test_on_command_sets_processing(overlay):
+    overlay._on_command("start")
+    assert overlay._octopus._state == "processing"
+
+
+def test_on_timeout_sets_idle(overlay):
+    overlay._octopus.set_state("listening")
+    overlay._on_timeout()
+    assert overlay._octopus._state == "idle"
+
+
+def test_on_state_change_sleeping_sets_idle(overlay):
+    overlay._octopus.set_state("listening")
+    overlay._on_state_change("sleeping")
+    assert overlay._octopus._state == "idle"
+
+
+def test_show_animated_does_nothing_when_not_in_overlay_mode(overlay):
+    overlay._overlay_active = False
+    overlay.show_animated()
+    assert not overlay.isVisible()
+
+
+# --- tray_icon ---
+
+
+def test_create_tray_icon_returns_system_tray(qapp_instance):
+    from tray_icon import create_tray_icon
+    from PyQt6.QtWidgets import QSystemTrayIcon
+    tray = create_tray_icon(qapp_instance, MagicMock(), MagicMock())
+    assert isinstance(tray, QSystemTrayIcon)

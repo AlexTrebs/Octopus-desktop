@@ -29,6 +29,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 _DEDUP_WINDOW = 1.0  # seconds — suppresses partial+final firing the same command twice
+_VOSK_MIN_CONFIDENCE = 0.5  # per-word minimum confidence for final results
 
 
 class AssistantEvent(StrEnum):
@@ -119,6 +120,7 @@ class VoiceAssistant:
 
         self._recognizer = KaldiRecognizer(self._model, 16000)
         self._recognizer.SetGrammar(grammar)
+        self._recognizer.SetWords(True)
 
     def process_audio(self, pcm_i16: np.ndarray) -> None:
         # Throttle audio level events to ~10Hz
@@ -153,7 +155,13 @@ class VoiceAssistant:
         for chunk in self._drain_vosk_frames():
             is_final = self._recognizer.AcceptWaveform(chunk)
             if is_final:
-                text = json.loads(self._recognizer.Result()).get("text", "").strip()
+                result_json = json.loads(self._recognizer.Result())
+                text = result_json.get("text", "").strip()
+                if text:
+                    words = result_json.get("result", [])
+                    if words and min(w.get("conf", 1.0) for w in words) < _VOSK_MIN_CONFIDENCE:
+                        logger.debug("Vosk result rejected low confidence: %r", text)
+                        text = ""
                 if text:
                     self._handle_vosk_text(text, is_partial=False)
             else:

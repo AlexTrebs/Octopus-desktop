@@ -26,6 +26,13 @@ class AudioSession:
     def resample(self, pcm_i16: np.ndarray) -> np.ndarray:
         if self.native_rate == SAMPLE_RATE:
             return pcm_i16
+        ratio = self.native_rate // SAMPLE_RATE
+        if ratio * SAMPLE_RATE == self.native_rate:  # exact integer ratio (e.g. 48kHz→16kHz = 3:1)
+            n_out = len(pcm_i16) // ratio
+            return np.ascontiguousarray(
+                pcm_i16[: n_out * ratio].reshape(-1, ratio).mean(axis=1).astype(np.int16)
+            )
+        # Non-integer ratio fallback: linear interpolation
         new_len = int(len(pcm_i16) * SAMPLE_RATE / self.native_rate)
         indices = np.linspace(0, len(pcm_i16) - 1, new_len)
         return np.ascontiguousarray(

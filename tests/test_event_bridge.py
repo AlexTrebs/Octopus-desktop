@@ -1,6 +1,6 @@
 """Tests for AssistantSignals and AudioWorkerThread._on_event routing."""
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 
 def test_assistant_signals_has_all_signals(qapp_instance):
@@ -75,3 +75,53 @@ def test_request_stop_sets_event(qapp_instance):
     assert not worker._stop_event.is_set()
     worker.request_stop()
     assert worker._stop_event.is_set()
+
+
+# --- run() loop ---------------------------------------------------------------
+
+def test_run_session_error_emits_error_occurred_and_stopped(qapp_instance):
+    """open_audio_session failure → error_occurred + stopped, no started."""
+    from event_bridge import AudioWorkerThread, AssistantSignals
+    signals = AssistantSignals()
+    errors, stopped = [], []
+    signals.error_occurred.connect(errors.append)
+    signals.stopped.connect(lambda: stopped.append(True))
+
+    worker = AudioWorkerThread(MagicMock(), None, signals)
+    with patch("event_bridge.open_audio_session", side_effect=RuntimeError("no mic")):
+        worker.run()
+
+    assert errors == ["no mic"]
+    assert stopped == [True]
+
+
+def test_run_reads_frames_and_stops_cleanly(qapp_instance):
+    """run() emits started, reads one frame, exits on stop_event, emits stopped."""
+    from event_bridge import AudioWorkerThread, AssistantSignals
+    signals = AssistantSignals()
+    started, stopped = [], []
+    signals.started.connect(lambda: started.append(True))
+    signals.stopped.connect(lambda: stopped.append(True))
+
+    worker = AudioWorkerThread(MagicMock(), None, signals)
+
+    def fake_read(n, **kwargs):
+        worker._stop_event.set()
+        return bytes(n * 2)  # n int16 samples
+
+    mock_session = MagicMock()
+    mock_session.stream.read.side_effect = fake_read
+    mock_session.read_size = 512
+    mock_session.resample.side_effect = lambda x: x
+
+    mock_ctx = MagicMock()
+    mock_ctx.__enter__.return_value = mock_session
+    mock_ctx.__exit__.return_value = False
+
+    with patch("event_bridge.open_audio_session", return_value=mock_ctx):
+        with patch("event_bridge.VoiceAssistant") as MockVA:
+            MockVA.return_value.cleanup = MagicMock()
+            worker.run()
+
+    assert started == [True]
+    assert stopped == [True]
