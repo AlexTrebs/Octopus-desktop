@@ -65,13 +65,19 @@ class OctopusWidget(QWidget):
     def play_animation(self, movie: QMovie) -> None:
         if self._movie is not None:
             self._movie.stop()
+            self._movie.frameChanged.disconnect(self.update)
+            self._movie.finished.disconnect(self._on_animation_finished)
         self._movie = movie
         self._movie.frameChanged.connect(self.update)
         self._movie.finished.connect(self._on_animation_finished)
         self._movie.start()
 
     def _on_animation_finished(self) -> None:
+        movie = self._movie
         self._movie = None
+        if movie is not None:
+            movie.frameChanged.disconnect(self.update)
+            movie.finished.disconnect(self._on_animation_finished)
         self.animation_finished.emit()
         self.update()
 
@@ -210,7 +216,7 @@ class OctopusWidget(QWidget):
                 path.cubicTo(cx1, cy1, cx2, cy2, end_x, end_y)
 
             # Taper the tentacle width
-            pen_width = max(2, 5 - 1)
+            pen_width = max(2, 5 - seg)
             pen = QPen(tentacle_color, pen_width)
             pen.setCapStyle(Qt.PenCapStyle.RoundCap)
             painter.setPen(pen)
