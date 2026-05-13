@@ -36,8 +36,8 @@ def load_all() -> None:
             # Re-register if the module was already cached but registry was cleared
             for attr in vars(mod).values():
                 if (
-                    isinstance(attr, type)
-                    and hasattr(attr, "action_type")
+                    isinstance(getattr(attr, "action_type", None), str)
+                    and attr.action_type
                     and attr.action_type not in _REGISTRY
                 ):
                     register(attr)

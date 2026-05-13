@@ -1,6 +1,16 @@
 import pytest
 
 
+@pytest.fixture(autouse=True)
+def fresh_registry():
+    import actions
+    actions._REGISTRY.clear()
+    actions.load_all()
+    yield
+    actions._REGISTRY.clear()
+    actions.load_all()
+
+
 def test_load_all_registers_builtins():
     import actions
     actions._REGISTRY.clear()
@@ -45,5 +55,6 @@ def test_load_all_is_idempotent():
     import actions
     actions._REGISTRY.clear()
     actions.load_all()
+    first_snapshot = dict(actions._REGISTRY)
     actions.load_all()
-    assert len([k for k in actions._REGISTRY]) == len(set(actions._REGISTRY))
+    assert actions._REGISTRY == first_snapshot
