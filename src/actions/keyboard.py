@@ -53,7 +53,7 @@ if _system == "Darwin":
 elif _system == "Windows":
     _KEY_MAP.update({"Windows": Key.cmd, "Meta": Key.cmd, "Command": Key.ctrl})
 else:
-    _KEY_MAP.update({"Meta": Key.cmd, "Super": Key.cmd, "Windows": Key.cmd, "Command": Key.ctrl})
+    _KEY_MAP.update({"Meta": Key.cmd, "Super": Key.cmd, "Windows": Key.cmd})
 
 
 def parse_key(key_name: str) -> Key | KeyCode:
@@ -76,7 +76,7 @@ class KeyboardAction(Action):
         self.keys = keys
 
     def execute(self, dry_run: bool = False) -> None:
-        for chord in self.keys:
+        for i, chord in enumerate(self.keys):
             chord_str = "+".join(chord)
             logger.debug("Pressing: %s", chord_str)
             if dry_run:
@@ -87,7 +87,8 @@ class KeyboardAction(Action):
                 _keyboard.press(key)
             for key in reversed(parsed):
                 _keyboard.release(key)
-            time.sleep(0.05)
+            if i < len(self.keys) - 1:
+                time.sleep(0.05)
 
     @classmethod
     def from_config(cls, name: str, data: dict) -> KeyboardAction:
