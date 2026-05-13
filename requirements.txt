@@ -1,0 +1,9 @@
+vosk>=0.3.45
+PyAudio>=0.2.14
+pynput>=1.7.6
+webrtcvad>=2.0.10
+python-dotenv>=1.0.0
+numpy>=2.0.0
+PyQt6>=6.6.0
+# Optional: install pvporcupine>=3.0.0 for Porcupine wake word mode
+pytest>=8.0.0
