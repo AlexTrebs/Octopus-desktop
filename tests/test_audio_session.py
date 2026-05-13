@@ -89,28 +89,30 @@ def test_open_stream_step1_succeeds_at_16khz():
     assert size == 512
 
 
-def test_open_stream_step2_native_rate_fallback():
-    from audio_session import _open_stream
-    pa = MagicMock()
-    pa.get_device_info_by_index.return_value = {"name": "usb-mic", "defaultSampleRate": 48000.0}
-    mock_stream = MagicMock()
-    pa.open.side_effect = [Exception("16kHz unavailable"), mock_stream]
-    stream, rate, size = _open_stream(pa, 0, 512)
-    assert stream is mock_stream
-    assert rate == 48000
-
-
-def test_open_stream_step3_default_device_fallback():
+def test_open_stream_step2_default_device_fallback():
     from audio_session import _open_stream
     from audio_processor import SAMPLE_RATE
     pa = MagicMock()
     pa.get_device_info_by_index.return_value = {"name": "usb-mic", "defaultSampleRate": 48000.0}
     mock_stream = MagicMock()
-    pa.open.side_effect = [Exception("16kHz fail"), Exception("native fail"), mock_stream]
+    pa.open.side_effect = [Exception("16kHz fail"), mock_stream]
     with patch("audio_session._find_default_device", return_value=99):
         stream, rate, size = _open_stream(pa, 0, 512)
-    assert rate == SAMPLE_RATE
     assert stream is mock_stream
+    assert rate == SAMPLE_RATE
+
+
+def test_open_stream_step3_native_rate_fallback():
+    from audio_session import _open_stream
+    pa = MagicMock()
+    pa.get_device_info_by_index.return_value = {"name": "usb-mic", "defaultSampleRate": 48000.0}
+    mock_stream = MagicMock()
+    # Step 1 fails, Step 2 (default) has no fallback device → goes to Step 3
+    pa.open.side_effect = [Exception("16kHz fail"), mock_stream]
+    with patch("audio_session._find_default_device", return_value=None):
+        stream, rate, size = _open_stream(pa, 0, 512)
+    assert stream is mock_stream
+    assert rate == 48000
 
 
 def test_open_stream_all_fail_raises():
