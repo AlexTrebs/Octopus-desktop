@@ -60,7 +60,7 @@ def parse_key(key_name: str) -> Key | KeyCode:
     if key_name in _KEY_MAP:
         return _KEY_MAP[key_name]
     if len(key_name) == 1:
-        return KeyCode.from_char(key_name.lower())
+        return KeyCode.from_char(key_name)
     raise ValueError(
         f"Unknown key name: {key_name!r}. "
         f"Valid special keys: {', '.join(sorted(_KEY_MAP))}. "
