@@ -10,6 +10,7 @@ def test_action_is_abstract():
 def test_concrete_action_requires_execute():
     class NoExecute(Action):
         action_type = "test"
+        @classmethod
         def from_config(cls, name, data): ...
         def summary(self): return ""
 
