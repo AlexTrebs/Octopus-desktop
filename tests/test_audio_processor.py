@@ -159,3 +159,37 @@ def test_pcm_float_roundtrip():
     roundtrip = _float_to_pcm(_pcm_to_float(original))
     # Allow ±1 LSB rounding error
     assert np.all(np.abs(roundtrip.astype(np.int32) - original.astype(np.int32)) <= 1)
+
+
+# --- RNNoise guarded construction ---
+
+def test_processor_disabled_skips_rnnoise():
+    """AudioProcessor(enabled=False) must not instantiate RNNoise."""
+    with patch("audio_processor.RNNoise") as MockRNNoise:
+        from audio_processor import AudioProcessor
+        from config import Environment
+        proc = AudioProcessor(Environment.MODERATE, enabled=False)
+    MockRNNoise.assert_not_called()
+    assert proc.denoiser is None
+
+
+def test_processor_enabled_with_rnnoise_unavailable_still_constructs():
+    """If RNNoise raises RuntimeError (librnnoise absent), processor still works."""
+    with patch("audio_processor.RNNoise", side_effect=RuntimeError("no lib")):
+        from audio_processor import AudioProcessor
+        from config import Environment
+        proc = AudioProcessor(Environment.MODERATE, enabled=True)
+    assert proc.denoiser is None
+    # process() must still function — falls through AGC+VAD without denoiser
+    pcm = np.ones(512, dtype=np.int16)
+    # result is None (VAD rejects silence) or ndarray — just must not raise
+    proc.process(pcm)
+
+
+def test_cleanup_with_no_denoiser_is_safe():
+    """cleanup() must not raise when denoiser is None."""
+    with patch("audio_processor.RNNoise") as MockRNNoise:
+        from audio_processor import AudioProcessor
+        from config import Environment
+        proc = AudioProcessor(Environment.MODERATE, enabled=False)
+    proc.cleanup()  # denoiser is None — must not raise

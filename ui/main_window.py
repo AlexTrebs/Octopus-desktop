@@ -2,7 +2,7 @@
 
 import logging
 
-from PyQt6.QtCore import Qt, QSize, QPoint, QRect
+from PyQt6.QtCore import Qt, QSize, QPoint, QRect, QTimer
 from PyQt6.QtGui import (
     QPainter,
     QColor,
@@ -140,7 +140,13 @@ class MainWindow(QMainWindow):
     def _start_audio_worker(self) -> None:
         device_index = self._resolve_device_index()
         self._worker = AudioWorkerThread(self._config, device_index, self._signals)
+        self._worker.finished.connect(self._on_worker_finished)
         self._worker.start()
+
+    def _on_worker_finished(self) -> None:
+        if self._worker and not self._worker._stop_event.is_set():
+            logger.warning("Audio worker stopped unexpectedly — restarting in 1s")
+            QTimer.singleShot(1000, self._start_audio_worker)
 
     def _resolve_device_index(self) -> int | None:
         """Look up saved device name, or auto-select a sensible default for GUI."""
