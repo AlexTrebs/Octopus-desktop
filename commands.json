@@ -1,0 +1,106 @@
+{
+  "start": {
+    "action": "keyboard",
+    "keys": [["MediaPlayPause"]]
+  },
+  "stop": {
+    "action": "keyboard",
+    "keys": [["MediaPlayPause"]]
+  },
+  "next": {
+    "action": "keyboard",
+    "keys": [["MediaNextTrack"]]
+  },
+  "previous": {
+    "action": "keyboard",
+    "keys": [["MediaPreviousTrack"]]
+  },
+  "up": {
+    "action": "keyboard",
+    "keys": [["VolumeUp"], ["VolumeUp"], ["VolumeUp"]]
+  },
+  "down": {
+    "action": "keyboard",
+    "keys": [["VolumeDown"], ["VolumeDown"], ["VolumeDown"]]
+  },
+  "louder": {
+    "action": "keyboard",
+    "keys": [["VolumeUp"], ["VolumeUp"], ["VolumeUp"], ["VolumeUp"], ["VolumeUp"]]
+  },
+  "copy": {
+    "action": "keyboard",
+    "keys": [["Control", "c"]]
+  },
+  "paste": {
+    "action": "keyboard",
+    "keys": [["Control", "v"]]
+  },
+  "copy and paste": {
+    "action": "keyboard",
+    "keys": [["Control", "c"], ["Control", "v"]]
+  },
+  "save": {
+    "action": "keyboard",
+    "keys": [["Control", "s"]]
+  },
+  "undo": {
+    "action": "keyboard",
+    "keys": [["Control", "z"]]
+  },
+  "full screen": {
+    "action": "keyboard",
+    "keys": [["F11"]]
+  },
+  "escape": {
+    "action": "keyboard",
+    "keys": [["Escape"]]
+  },
+  "record drums": {
+    "action": "daw",
+    "track": "drums",
+    "command": "record"
+  },
+  "record bass": {
+    "action": "daw",
+    "track": "bass",
+    "command": "record"
+  },
+  "record vocals": {
+    "action": "daw",
+    "track": "vocals",
+    "command": "record"
+  },
+  "stop recording": {
+    "action": "daw",
+    "track": "all",
+    "command": "stop"
+  },
+  "play track": {
+    "action": "daw",
+    "track": "all",
+    "command": "play"
+  },
+  "mute drums": {
+    "action": "daw",
+    "track": "drums",
+    "command": "mute"
+  },
+  "solo bass": {
+    "action": "daw",
+    "track": "bass",
+    "command": "solo"
+  },
+  "loop on": {
+    "action": "daw",
+    "track": "all",
+    "command": "loop_enable"
+  },
+  "loop off": {
+    "action": "daw",
+    "track": "all",
+    "command": "loop_disable"
+  },
+  "cancel": {
+    "action": "none"
+  }
+}
